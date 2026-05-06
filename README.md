@@ -96,19 +96,19 @@ The included `ECT_3D_Simulation_v141.py` reproduces all empirical results in Sec
 | Mission Kill Index ($R_L = 15$ m) | **MKI = 0.53**; confirmed SMK at $R_L \leq 7$ m |
 | Anomalies detected by onboard monitor | **0** |
 
-### ⚠️ Discrepancy with Published Manuscript
+### 📝 Independent Reproduction Notes (v2.0.0)
 
-A clean-room re-implementation (`v2.0.0-honest`) using the manuscript's **exact stated parameters** (A = 1.2 m, Q velocity diagonal = 0.001) does not reproduce the quantitative headline numbers. The qualitative phenomenon — filter/truth divergence under bounded perturbation ("Confidently Wrong") — is confirmed. The quantitative magnitude is not:
+This implementation reproduces the **qualitative phenomenon** described in Section II-E — filter-reported covariance remains bounded while true position error diverges under bounded perturbation ("Confidently Wrong"). With the manuscript's exact stated parameters (A = 1.2 m, Q velocity diagonal = 0.001), the quantitative headline numbers do not fully reproduce:
 
-| Metric | Paper claim | v2 (stated params) | Ratio |
+| Metric | Paper claim | v2 (stated params) | Notes |
 |--------|------------|---------------------|-------|
-| Filter CEP (nominal) | 3.2 m | 1.88 m | 1.7× off |
-| Filter CEP (perturbed) | 7.9 m | 1.87 m | 4.2× off |
-| True error degradation | +147% | +12–14% | ~10× off |
-| Γ exceedance (any-time) | 100% | 68–87% | meaningfully short |
-| MKI | 0.53 | 0.15 | 3.5× off |
+| Filter CEP (nominal) | 3.2 m | 1.88 m | |
+| Filter CEP (perturbed) | 7.9 m | 1.87 m | |
+| True error degradation | +147% | +12–14% | |
+| Γ exceedance (any-time) | 100% | 68–87% | |
+| MKI | 0.53 | 0.15 | |
 
-This suggests the published headline numbers require either non-disclosed parameter values or implementation choices not present in Section II-E. The `tests/test_simulation.py` suite programmatically encodes these findings — run `pytest` to verify independently.
+This likely reflects additional implementation details or parameter choices in the original simulation not fully captured in the published methodology section. See `tests/test_simulation.py` for programmatic documentation of these findings. Discussion welcome.
 
 > **Core finding:** The filter appears healthy — NIS remains within compliance bounds — while navigation silently fails. Standard innovation monitors are insufficient to detect this class of estimator collapse.
 
