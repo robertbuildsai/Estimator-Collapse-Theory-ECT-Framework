@@ -1,3 +1,7 @@
+# The Sophistication Paradox: A Systems-Theoretic Framework for Estimator Collapse in Precision-Guided Autonomous Navigation Architectures 📉
+
+### **Formal Implementation of the Estimator Collapse Theory (ECT) Framework**
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20037820.svg)](https://doi.org/10.5281/zenodo.20037820)
 
 > **Note:** This repository hosts the code and formal proofs for the ECT framework as described in the 2026 manuscript of the same name.
@@ -16,9 +20,7 @@ The **Estimator Collapse Theory (ECT)** framework formalizes the conditions unde
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](requirements.txt)
 [![Status](https://img.shields.io/badge/manuscript-in%20preparation-orange)]()
 
-**Version:** v1.4.2 – Archival GA & Metadata Release (May 2026) | **Author:** **Nick Barua¹·² and Robert J. Douglas¹·³**
-
-¹ *AN Holdings CO., Nishinomiya, Japan* ² **ORCID:** [0000-0003-4641-0112](https://orcid.org/0000-0003-4641-0112) *Kobe Gakuin University, Kobe, Japan* ³ *Kobe Design Lab, Kobe, Japan*
+**Version:** v1.4.2 – Archival GA & Metadata Release (May 2026) | **Author:** N. Barua, AN Holdings Co. / Kobe Gakuin University | **ORCID:** [0000-0003-4641-0112](https://orcid.org/0000-0003-4641-0112)
 
 ---
 
