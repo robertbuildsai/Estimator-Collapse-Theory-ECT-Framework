@@ -1,11 +1,17 @@
 """
 ECT_3D_Simulation_v141.py
 
-Reference implementation of the Estimator Collapse Theory (ECT) Framework 
-for 3-D Sequential EKF (GNSS + Range Fusion).
+Clean-room reference implementation of the Estimator Collapse Theory (ECT)
+Framework for 3-D Sequential EKF (GNSS + Range Fusion).
 
-Author: R. J. Douglas, derived from manuscript equations
+Derived from the published equations in Section II-E of:
+  "Estimator Collapse Theory: A Framework for Predicting
+   Filter Instability under Bounded Adversarial Perturbation"
+
+Author: R. J. Douglas
 """
+
+__version__ = '2.0.0-honest'
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,8 +36,9 @@ P0 = np.diag([9., 9., 9., 0.25, 0.25, 0.25])      # initial covariance
 F = np.eye(N_STATE)
 F[:3, 3:] = DT * np.eye(3)
 
-# Process noise covariance — Section II-E
-Q = np.diag([0.01, 0.01, 0.01, 0.001, 0.001, 0.001])
+# Process noise covariance — Section II-E (exact manuscript values)
+_Q_MANUSCRIPT = [0.01, 0.01, 0.01, 0.001, 0.001, 0.001]
+Q = np.diag(_Q_MANUSCRIPT)
 
 # ── Sensor 1: GNSS position ──────────────────────────────────────────────────
 H_GNSS = np.hstack([np.eye(3), np.zeros((3, 3))])        # 3×6
@@ -188,6 +195,9 @@ def run_mc(n_mc=N_MC, verbose=True, a_pert_override=None, omega_override=None,
     pert_iter = range(n_mc)
     if verbose: pert_iter = tqdm(pert_iter, desc="Perturbed")
     for i in pert_iter:
+        # Seed offset +100000 ensures perturbed runs are independent
+        # realizations (different noise draws) rather than paired with
+        # the nominal run at the same index.
         pert_mse[i], pert_nis[i], pert_cep[i], pert_pos_err[i] = _simulate_trajectory(
             seed=i + 100000, perturbed=True, 
             a_pert_override=a_pert_override, omega_override=omega_override, 
@@ -215,8 +225,9 @@ def gamma_series(res_dict):
     return np.mean(gamma_all, axis=0), gamma_all
 
 def nis_compliance(res_dict):
-    nom_comp  = np.mean(res_dict['nom_nis'] <= CHI2_GATE) * 100
-    pert_comp = np.mean(res_dict['pert_nis'] <= CHI2_GATE) * 100
+    """Return NIS compliance as fractions in [0, 1]."""
+    nom_comp  = np.mean(res_dict['nom_nis'] <= CHI2_GATE)
+    pert_comp = np.mean(res_dict['pert_nis'] <= CHI2_GATE)
     return nom_comp, pert_comp
 
 def print_summary(res_dict):
@@ -232,6 +243,7 @@ def print_summary(res_dict):
     sustained = (np.all(gamma_all[:, -200:] >= GAMMA_CRIT, axis=1)).mean() * 100
 
     nc, pc = nis_compliance(res_dict)
+    nc *= 100; pc *= 100  # convert fractions to % for display
     mki = pert_p / R_L
 
     print("\n" + "="*60)

@@ -45,9 +45,24 @@ def test_gamma_exceedance():
 def test_nis_compliance():
     """
     Test that the NIS compliance matches the 92-96% range claimed.
+    nis_compliance() returns fractions in [0, 1].
     """
     res = ECT.run_mc(n_mc=10, verbose=False)
     nc, pc = ECT.nis_compliance(res)
     
-    assert 90.0 < nc < 98.0, f"Nominal NIS compliance {nc}% out of range"
-    assert 90.0 < pc < 98.0, f"Perturbed NIS compliance {pc}% out of range"
+    assert 0.90 < nc < 0.98, f"Nominal NIS compliance {nc:.3f} out of range"
+    assert 0.90 < pc < 0.98, f"Perturbed NIS compliance {pc:.3f} out of range"
+
+def test_version():
+    """Confirm version string tracks honest implementation."""
+    assert hasattr(ECT, '__version__')
+    assert 'honest' in ECT.__version__
+
+def test_manuscript_q_preserved():
+    """
+    Guard against accidental parameter drift. The manuscript's exact Q 
+    diagonal must be [0.01, 0.01, 0.01, 0.001, 0.001, 0.001].
+    """
+    expected = [0.01, 0.01, 0.01, 0.001, 0.001, 0.001]
+    actual = np.diag(ECT.Q).tolist()
+    assert actual == expected, f"Q diagonal drifted from manuscript: {actual}"
