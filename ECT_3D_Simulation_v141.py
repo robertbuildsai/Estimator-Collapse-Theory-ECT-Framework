@@ -205,6 +205,7 @@ def run_mc(n_mc=N_MC, verbose=True, a_pert_override=None, omega_override=None,
         )
 
     return {
+        't': np.arange(N_STEPS) * DT,
         'nom_mse': nom_mse, 'nom_nis': nom_nis, 'nom_cep': nom_cep, 'nom_pos_err': nom_pos_err,
         'pert_mse': pert_mse, 'pert_nis': pert_nis, 'pert_cep': pert_cep, 'pert_pos_err': pert_pos_err
     }
