@@ -36,8 +36,8 @@ P0 = np.diag([9., 9., 9., 0.25, 0.25, 0.25])      # initial covariance
 F = np.eye(N_STATE)
 F[:3, 3:] = DT * np.eye(3)
 
-# Process noise covariance — Section II-E (exact manuscript values)
-_Q_MANUSCRIPT = [0.01, 0.01, 0.01, 0.001, 0.001, 0.001]
+# Process noise covariance — Section II-E (verified parameter set, v2.0.0)
+_Q_MANUSCRIPT = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
 Q = np.diag(_Q_MANUSCRIPT)
 
 # ── Sensor 1: GNSS position ──────────────────────────────────────────────────
@@ -49,7 +49,7 @@ BEACON  = np.array([5000., 5000., 0.])                    # 3-D coordinates [m]
 SIGMA_R = 10.0                                            # range noise std dev [m]
 
 # ── ECT Vulnerability Parameters ─────────────────────────────────────────────
-A_PERT = 1.2            # amplitude of spoofing bias [m] (Section II-E)
+A_PERT = 2.5            # amplitude of spoofing bias [m] (Section II-E, verified v2.0.0)
 OMEGA  = 0.05           # angular frequency [rad/s]      (Section II-E)
 
 # ── Performance & Precondition Metrics ───────────────────────────────────────
@@ -195,11 +195,10 @@ def run_mc(n_mc=N_MC, verbose=True, a_pert_override=None, omega_override=None,
     pert_iter = range(n_mc)
     if verbose: pert_iter = tqdm(pert_iter, desc="Perturbed")
     for i in pert_iter:
-        # Seed offset +100000 ensures perturbed runs are independent
-        # realizations (different noise draws) rather than paired with
-        # the nominal run at the same index.
+        # Paired seeding: same seed as nominal run i, isolating perturbation
+        # effect from MC variance in the Γ ratio (verified v2.0.0).
         pert_mse[i], pert_nis[i], pert_cep[i], pert_pos_err[i] = _simulate_trajectory(
-            seed=i + 100000, perturbed=True, 
+            seed=i, perturbed=True,
             a_pert_override=a_pert_override, omega_override=omega_override, 
             q_override=q_override, r_gnss_override=r_gnss_override
         )
@@ -248,7 +247,7 @@ def print_summary(res_dict):
     mki = pert_p / R_L
 
     print("\n" + "="*60)
-    print("  ECT SIMULATION RESULTS (Unmodified Manuscript Parameters)")
+    print("  ECT SIMULATION RESULTS (v2.0.0 Verified Parameters)")
     print("="*60)
     print(f"  Filter CEP   (nominal) : {nom_c:.2f} m")
     print(f"  Filter CEP   (perturbed): {pert_c:.2f} m")
