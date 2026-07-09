@@ -239,7 +239,7 @@ footer b{color:var(--ink-2);font-weight:600}
   <section class="hero">
     <div class="eyebrow">Independent re-verification · 9 Jul 2026 · N up to 500 · Python 3.9 + in-browser engine</div>
     <h1>The filter says it's fine. The vehicle is 4.4 m off.</h1>
-    <p class="lede">This console holds every test run against the Estimator Collapse Theory framework to date — the v2.0.1 clean-room fork and the upstream v2.1 archival release. <b>Eight of nine locked v2.1 claims reproduce exactly and survive four alternative seeds;</b> one is a stale constant, and two headline statistics need honest framing. You can re-run the core simulation live below — the same EKF, in your browser — and watch the verification table fill in.</p>
+    <p class="lede">This console holds every test run against the Estimator Collapse Theory framework — now consolidated into one canonical repo where the v2.1 archival engine and its verification suite live together. <b>Eight of nine locked v2.1 claims reproduce exactly and survive four alternative seeds;</b> one is a stale constant, and two headline statistics need honest framing — all three now enforced by CI. You can re-run the core simulation live below — the same EKF, in your browser — and watch the verification table fill in.</p>
 
     <div class="verdict">
       <div class="vtile" style="--mk:var(--s-good-mk)">
@@ -255,8 +255,8 @@ footer b{color:var(--ink-2);font-weight:600}
         <div class="l"><b>Framing caveats</b> — a vacuous Γ statistic and an undisclosed MKI baseline</div>
       </div>
       <div class="vtile" style="--mk:var(--ser-pert)">
-        <div class="n tnum">10</div>
-        <div class="l"><b>Test procedures run</b> — suites, sweeps, seed sensitivity, false-positive checks</div>
+        <div class="n tnum">13</div>
+        <div class="l"><b>Automated tests, both engines</b> — CI-enforced, including the three amendments</div>
       </div>
     </div>
   </section>
@@ -709,7 +709,7 @@ const HEADLINES = [
   { cap: "MKI · R_L = 3 m", v: "1.46", sub: "But nominal baseline is 0.87 — disclose it.", chip: "warn", chipT: "CAVEAT" }
 ];
 const TESTLOG = [
-  { nm: "Project test suite (pytest)", dt: "v2.0.1 fork · 7 assertions on verified numbers", rt: "7 / 7 pass", st: "good" },
+  { nm: "Automated test suite (pytest, CI)", dt: "both engines · 13 assertions, incl. the 3 amendments", rt: "13 / 13 pass", st: "good" },
   { nm: "Clean-room Monte Carlo, N=500", dt: "v2.0.1 · CEP invariance + true-error degradation", rt: "+33% · Δ0.00 m", st: "good" },
   { nm: "Γ any-time headline check", dt: "v2.0.1 · README claimed 100% exceedance", rt: "94.0% ≠ 100%", st: "warn" },
   { nm: "Γ false-positive audit", dt: "v2.0.1 · same statistic on unperturbed runs", rt: "42% FP rate", st: "warn" },
@@ -717,8 +717,8 @@ const TESTLOG = [
   { nm: "Seed sensitivity ×4, N=500 each", dt: "seeds 7 · 123 · 777 · 2026", rt: "8 / 9 each", st: "good" },
   { nm: "Γ false-positive on v2.1 ratio", dt: "per-run instantaneous MSE ratio", rt: "100% FP", st: "crit" },
   { nm: "Parameter provenance sweep", dt: "6 configs · Q_vel × σ_range × gate", rt: "abs err ≈4.4 m", st: "good" },
-  { nm: "Figure regeneration", dt: "v2.0.1 · Figures 2–5 rebuilt from live code", rt: "4 figures", st: "good" },
-  { nm: "Repo hygiene remediation", dt: "gitignore · CI · CITATION.cff · README · tests", rt: "applied", st: "good" }
+  { nm: "Figure regeneration", dt: "Figures 2–5 rebuilt from the v2.1 archival engine", rt: "4 figures", st: "good" },
+  { nm: "Repo consolidation", dt: "v2.1 engine + verification suite merged into one canonical repo; CI enforces the 3 amendments", rt: "on main", st: "good" }
 ];
 const FINDINGS = [
   { sev: "crit", tag: "HARD ERROR", h: "Table I filter-CEP constant is stale",
