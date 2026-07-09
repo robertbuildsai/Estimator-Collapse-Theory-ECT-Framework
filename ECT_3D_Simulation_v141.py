@@ -294,11 +294,16 @@ def print_summary(res_dict):
 #  Figure generation (Figures 2–5)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def make_figures(res_dict, outdir='Figures', dpi=300):
+def make_figures(res_dict, outdir='Figures', dpi=300, err_label='True horizontal error'):
     """
     Regenerate Figures 2–5 from a run_mc result so the archived figures always
     match the code that claims to produce them. Figure 1 (EKF loop diagram) is
     a hand-drawn schematic and is not regenerated.
+
+    err_label names the true-error trace: the v141 clean-room engine reports
+    2-D horizontal error ('True horizontal error'); the v2.1 archival engine
+    reports 3-D True Position Error, so tools/make_manuscript_figures.py passes
+    'True position error (TPE)'.
     """
     import os
     os.makedirs(outdir, exist_ok=True)
@@ -340,9 +345,9 @@ def make_figures(res_dict, outdir='Figures', dpi=300):
     # ── Figure 4: Confidently Wrong — filter CEP invariant, true error grows ─
     fig, ax = plt.subplots(figsize=(8.5, 4.5))
     ax.plot(t, np.median(res_dict['nom_pos_err'], axis=0), color='#1baf7a', lw=1.6,
-            label='True horizontal error — nominal')
+            label=f'{err_label} — nominal')
     ax.plot(t, np.median(res_dict['pert_pos_err'], axis=0), color='#2a78d6', lw=1.6,
-            label='True horizontal error — perturbed')
+            label=f'{err_label} — perturbed')
     ax.plot(t, np.median(res_dict['nom_cep'], axis=0), color='#eda100', lw=1.6, ls='--',
             label='Filter-reported CEP — nominal')
     ax.plot(t, np.median(res_dict['pert_cep'], axis=0), color='#d03b3b', lw=1.2, ls=':',
@@ -377,12 +382,15 @@ def make_figures(res_dict, outdir='Figures', dpi=300):
 
 
 if __name__ == '__main__':
-    # Usage: python ECT_3D_Simulation_v141.py [N_MC] [--no-figures]
-    # Default N=500 reproduces the README results table (~2 min).
-    args = [a for a in sys.argv[1:] if a != '--no-figures']
+    # Usage: python ECT_3D_Simulation_v141.py [N_MC] [--figures]
+    # Default N=500 prints the independent clean-room verification summary (~2 min).
+    # The canonical manuscript figures come from the v2.1 archival engine
+    # (tools/make_manuscript_figures.py); pass --figures here only to write the
+    # clean-room cross-check figures to Figures/verification/.
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
     n = int(args[0]) if args else N_MC
     res = run_mc(n_mc=n, verbose=True)
     print_summary(res)
-    if '--no-figures' not in sys.argv:
+    if '--figures' in sys.argv:
         plt.switch_backend('Agg')
-        make_figures(res)
+        make_figures(res, outdir='Figures/verification')
