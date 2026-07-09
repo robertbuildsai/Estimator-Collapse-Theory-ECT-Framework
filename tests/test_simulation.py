@@ -38,8 +38,10 @@ def test_true_position_error_degradation():
 
 def test_gamma_exceedance():
     """
-    Γ any-time exceedance reaches 100% with verified parameters.
-    Final-time exceedance remains partial (oscillatory injection).
+    Γ any-time exceedance is ~94% at N=500 with verified parameters (NOT 100%
+    — the earlier headline). At n_mc=10 the binomial noise is large, so the
+    bound is loose to avoid flakes: P(≥7 of 10 | p=0.94) ≈ 0.9997.
+    Final-time exceedance remains low (oscillatory injection).
     """
     res = ECT.run_mc(n_mc=10, verbose=False)
     _, gamma_all = ECT.gamma_series(res)
@@ -47,7 +49,7 @@ def test_gamma_exceedance():
     any_time = (np.any(gamma_all >= ECT.GAMMA_CRIT, axis=1)).mean() * 100
     final_time = (gamma_all[:, -1] >= ECT.GAMMA_CRIT).mean() * 100
 
-    assert any_time >= 90.0, f"Expected ≥90% any-time exceedance, got {any_time:.1f}%"
+    assert any_time >= 70.0, f"Expected ≥70% any-time exceedance, got {any_time:.1f}%"
     assert final_time < 30.0, f"Expected low final-time exceedance, got {final_time:.1f}%"
 
 def test_nis_compliance():

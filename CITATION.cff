@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Estimator Collapse Theory (ECT) Framework — independent verification record"
+version: 2.0.1
+date-released: 2026-07-09
+license: Apache-2.0
+repository-code: "https://github.com/robertbuildsai/Estimator-Collapse-Theory-ECT-Framework"
+doi: 10.5281/zenodo.19469720
+authors:
+  - family-names: Barua
+    given-names: Nick
+    orcid: "https://orcid.org/0000-0003-4641-0112"
+  - family-names: Douglas
+    given-names: Robert J.
+preferred-citation:
+  type: article
+  title: "The Sophistication Paradox: A Systems-Theoretic Framework for Estimator Collapse in Precision-Guided Autonomous Navigation Architectures"
+  authors:
+    - family-names: Barua
+      given-names: Nick
+    - family-names: Douglas
+      given-names: Robert J.
+  year: 2026
+  journal: "CEAS Aeronautical Journal (manuscript in preparation)"

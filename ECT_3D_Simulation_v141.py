@@ -11,7 +11,9 @@ Derived from the published equations in Section II-E of:
 Author: R. J. Douglas
 """
 
-__version__ = '2.0.0-honest'
+__version__ = '2.0.1-honest'
+
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -179,7 +181,7 @@ def run_mc(n_mc=N_MC, verbose=True, a_pert_override=None, omega_override=None,
 
     if verbose:
         print("="*60)
-        print(f"  ECT 3-D MC Simulation v1.4.1")
+        print(f"  ECT 3-D MC Simulation v{__version__}")
         print(f"  N={n_mc}  T={T}s  Δt={DT}s  A={a_pert_override if a_pert_override is not None else A_PERT}m  ω={omega_override if omega_override is not None else OMEGA} rad/s")
         print("="*60)
 
@@ -230,6 +232,23 @@ def nis_compliance(res_dict):
     pert_comp = np.mean(res_dict['pert_nis'] <= CHI2_GATE)
     return nom_comp, pert_comp
 
+def gamma_nominal_false_positive(res_dict):
+    """
+    False-positive rate of the Γ any-time exceedance statistic: fraction of
+    UNPERTURBED runs that cross Γ_crit at least once when scored with the same
+    statistic (split-half, so no run is compared against a mean that includes
+    itself). Single-run MSE is heavy-tailed, so any-time exceedance fires on
+    healthy runs too — report this baseline next to the perturbed rate.
+    """
+    nom_mse = res_dict['nom_mse']
+    half = nom_mse.shape[0] // 2
+    if half < 1:
+        return float('nan')
+    g_a = nom_mse[:half] / np.mean(nom_mse[half:], axis=0)
+    g_b = nom_mse[half:] / np.mean(nom_mse[:half], axis=0)
+    g = np.vstack([g_a, g_b])
+    return float((g >= GAMMA_CRIT).any(axis=1).mean())
+
 def print_summary(res_dict):
     nom_c, pert_c = cep_steady(res_dict)
     nom_p, pert_p = pos_err_steady(res_dict)
@@ -245,9 +264,10 @@ def print_summary(res_dict):
     nc, pc = nis_compliance(res_dict)
     nc *= 100; pc *= 100  # convert fractions to % for display
     mki = pert_p / R_L
+    fp = gamma_nominal_false_positive(res_dict) * 100
 
     print("\n" + "="*60)
-    print("  ECT SIMULATION RESULTS (v2.0.0 Verified Parameters)")
+    print(f"  ECT SIMULATION RESULTS (v{__version__} verified parameters)")
     print("="*60)
     print(f"  Filter CEP   (nominal) : {nom_c:.2f} m")
     print(f"  Filter CEP   (perturbed): {pert_c:.2f} m")
@@ -257,6 +277,7 @@ def print_summary(res_dict):
     print("-" * 60)
     print("  Γ Exceedance Metrics:")
     print(f"    Any-time exceedance     : {any_time:.1f}%")
+    print(f"    Nominal false-positive  : {fp:.1f}%  (same statistic, no attack)")
     print(f"    Final-time exceedance   : {final_time:.1f}%")
     print(f"    Sustained (last 200s)   : {sustained:.1f}%")
     print("-" * 60)
@@ -269,6 +290,99 @@ def print_summary(res_dict):
         print(f"  → MKI < 0.5. Soft Mission Kill not achieved at R_L = {R_L} m")
     print("="*60 + "\n")
 
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Figure generation (Figures 2–5)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def make_figures(res_dict, outdir='Figures', dpi=300):
+    """
+    Regenerate Figures 2–5 from a run_mc result so the archived figures always
+    match the code that claims to produce them. Figure 1 (EKF loop diagram) is
+    a hand-drawn schematic and is not regenerated.
+    """
+    import os
+    os.makedirs(outdir, exist_ok=True)
+    t = res_dict['t']
+    n_runs = res_dict['nom_mse'].shape[0]
+    gamma_t, gamma_all = gamma_series(res_dict)
+    fp = gamma_nominal_false_positive(res_dict) * 100
+
+    # ── Figure 2: Γ(t) temporal evolution ────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(8.5, 4.5))
+    p5, p95 = np.percentile(gamma_all, [5, 95], axis=0)
+    ax.fill_between(t, p5, p95, alpha=0.18, color='#2a78d6', label='5th–95th percentile')
+    ax.plot(t, gamma_t, color='#2a78d6', lw=1.8, label='Mean Γ(t) — perturbed')
+    ax.axhline(GAMMA_CRIT, color='#d03b3b', ls='--', lw=1.4, label=f'Γ_crit = {GAMMA_CRIT}')
+    ax.axhline(1.0, color='#1baf7a', ls='--', lw=1.2, label='Nominal (Γ = 1)')
+    ax.set(xlabel='Time [s]', ylabel='Γ(t)', xlim=(0, T),
+           title=f'Fig 2. Estimator Instability Number Γ(t), N = {n_runs} (v{__version__})')
+    ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
+    fig.tight_layout(); fig.savefig(f'{outdir}/Figure_2.png', dpi=dpi); plt.close(fig)
+
+    # ── Figure 3: per-run max-Γ distribution vs nominal false-positive ──────
+    fig, ax = plt.subplots(figsize=(8.5, 4.5))
+    nom_mse = res_dict['nom_mse']
+    half = n_runs // 2
+    g_fp = np.vstack([nom_mse[:half] / np.mean(nom_mse[half:], axis=0),
+                      nom_mse[half:] / np.mean(nom_mse[:half], axis=0)])
+    bins = np.linspace(0, max(gamma_all.max(axis=1).max(), g_fp.max(axis=1).max()) * 1.05, 40)
+    ax.hist(g_fp.max(axis=1), bins=bins, color='#1baf7a', alpha=0.65,
+            label='Nominal runs (false-positive baseline)')
+    ax.hist(gamma_all.max(axis=1), bins=bins, color='#2a78d6', alpha=0.65,
+            label='Perturbed runs')
+    ax.axvline(GAMMA_CRIT, color='#d03b3b', ls='--', lw=1.4, label=f'Γ_crit = {GAMMA_CRIT}')
+    ax.set(xlabel='max Γ over run', ylabel='Runs',
+           title=f'Fig 3. Any-time max Γ per run: perturbed vs unperturbed baseline '
+                 f'(FP rate {fp:.0f}%), N = {n_runs}')
+    ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
+    fig.tight_layout(); fig.savefig(f'{outdir}/Figure_3.png', dpi=dpi); plt.close(fig)
+
+    # ── Figure 4: Confidently Wrong — filter CEP invariant, true error grows ─
+    fig, ax = plt.subplots(figsize=(8.5, 4.5))
+    ax.plot(t, np.median(res_dict['nom_pos_err'], axis=0), color='#1baf7a', lw=1.6,
+            label='True horizontal error — nominal')
+    ax.plot(t, np.median(res_dict['pert_pos_err'], axis=0), color='#2a78d6', lw=1.6,
+            label='True horizontal error — perturbed')
+    ax.plot(t, np.median(res_dict['nom_cep'], axis=0), color='#eda100', lw=1.6, ls='--',
+            label='Filter-reported CEP — nominal')
+    ax.plot(t, np.median(res_dict['pert_cep'], axis=0), color='#d03b3b', lw=1.2, ls=':',
+            label='Filter-reported CEP — perturbed (overlaps nominal)')
+    ax.set(xlabel='Time [s]', ylabel='Error [m]', xlim=(0, T),
+           title=f'Fig 4. "Confidently Wrong": filter CEP invariant while true error grows, '
+                 f'N = {n_runs}')
+    ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
+    fig.tight_layout(); fig.savefig(f'{outdir}/Figure_4.png', dpi=dpi); plt.close(fig)
+
+    # ── Figure 5: NIS gate compliance ────────────────────────────────────────
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharey=True)
+    nc, pc = nis_compliance(res_dict)
+    for ax, key, comp, color, title in [
+        (axes[0], 'nom_nis',  nc, '#1baf7a', '(a) Nominal'),
+        (axes[1], 'pert_nis', pc, '#2a78d6', '(b) Perturbed'),
+    ]:
+        data = res_dict[key]
+        p5, p95 = np.percentile(data, [5, 95], axis=0)
+        ax.fill_between(t, p5, p95, color=color, alpha=0.22)
+        ax.plot(t, np.median(data, axis=0), color=color, lw=1.4, label='Median NIS')
+        ax.axhline(CHI2_GATE, color='#d03b3b', ls=':', lw=1.4, label=f'χ²₃ gate = {CHI2_GATE}')
+        ax.set(xlabel='Time [s]', ylabel='NIS', xlim=(0, T), title=title)
+        ax.text(0.97, 0.96, f'Gate compliance: {comp*100:.1f}%', transform=ax.transAxes,
+                ha='right', va='top', fontsize=9,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8))
+        ax.legend(fontsize=8, loc='upper left'); ax.grid(True, alpha=0.3)
+    fig.suptitle(f'Fig 5. NIS gate compliance, N = {n_runs} (v{__version__})', fontsize=10)
+    fig.tight_layout(); fig.savefig(f'{outdir}/Figure_5.png', dpi=dpi); plt.close(fig)
+
+    print(f"Figures 2–5 written to {outdir}/")
+
+
 if __name__ == '__main__':
-    res = run_mc(n_mc=30, verbose=True)
+    # Usage: python ECT_3D_Simulation_v141.py [N_MC] [--no-figures]
+    # Default N=500 reproduces the README results table (~2 min).
+    args = [a for a in sys.argv[1:] if a != '--no-figures']
+    n = int(args[0]) if args else N_MC
+    res = run_mc(n_mc=n, verbose=True)
     print_summary(res)
+    if '--no-figures' not in sys.argv:
+        plt.switch_backend('Agg')
+        make_figures(res)
